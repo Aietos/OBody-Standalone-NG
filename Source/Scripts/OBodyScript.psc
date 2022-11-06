@@ -62,6 +62,11 @@ Event OnInit()
 	OnLoad()
 EndEvent
 
+Event OnActorGenerated(Actor akActor, string presetName)
+	string actorPresetKey = "obody_" + akActor.GetActorBase().GetName() + "_preset"
+	StorageUtil.SetStringValue(none, actorPresetKey, presetName)
+EndEvent
+
 Function OnLoad()
 	; Key unbind
 	UnregisterForKey(PresetKeyPrevious)
@@ -79,6 +84,8 @@ Function OnLoad()
 	OBodyNative.SetORefit(ORefitEnabled)
 	OBodyNative.SetNippleRand(NippleRandEnabled)
 	OBodyNative.SetGenitalRand(GenitalRandEnabled)
+
+	OBodyNative.RegisterForOBodyEvent(self as Quest)
 	
 EndFunction
 
@@ -114,8 +121,14 @@ Function ShowPresetMenu(Actor act)
 	UIListMenu listMenu = UIExtensions.GetMenu("UIListMenu") as UIListMenu
 	listMenu.ResetMenu()
 
-	string[] title = new String[1]
-	title[0] = "-   OBody    -"
+	string actorPresetKey = "obody_" + act.GetActorBase().GetName() + "_preset"
+	string currentPreset = StorageUtil.GetStringValue(none, actorPresetKey, missing = "Unknown Preset")
+
+	string[] title = new String[4]
+	title[0] = "-   OBody   -"
+	title[1] = "Current Preset is:"
+	title[2] = currentPreset
+	title[3] = "-------------"
 
 	string[] presets = OBodyNative.GetAllPossiblePresets(act)
 	int l = presets.Length
@@ -163,9 +176,11 @@ Function ShowPresetMenu(Actor act)
 	string result = listMenu.GetResultString()
 
 	int num = listMenu.GetResultInt()
-	If !(num < 1)
+	If !(num < 4)
 		OBodyNative.ApplyPresetByName(act, result)
 		ObodyConsole("Applying: " + result)
+
+		StorageUtil.SetStringValue(none, actorPresetKey, result)
 
 		int me = ModEvent.Create("obody_manualchange")
 		ModEvent.PushForm(me, act)
